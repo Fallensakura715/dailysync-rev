@@ -96,14 +96,23 @@ export const createWreqAxiosAdapter = () => {
         let body = config.data;
 
         if (isFormDataStream(body)) {
-            for (const [name, value] of Object.entries(body.getHeaders())) {
-                if (!Object.keys(headers).some(header => header.toLowerCase() === name.toLowerCase())) {
+            const formHeaders = body.getHeaders();
+            for (const [name, value] of Object.entries(formHeaders)) {
+                const existingHeader = Object.keys(headers).find(header => header.toLowerCase() === name.toLowerCase());
+                if (name.toLowerCase() === 'content-type' && existingHeader) {
+                    delete headers[existingHeader];
+                }
+                if (name.toLowerCase() === 'content-type' || !existingHeader) {
                     headers[name] = String(value);
                 }
             }
 
             const contentLength = await getFormLength(body);
-            if (contentLength !== undefined && !Object.keys(headers).some(header => header.toLowerCase() === 'content-length')) {
+            const existingContentLength = Object.keys(headers).find(header => header.toLowerCase() === 'content-length');
+            if (contentLength !== undefined && existingContentLength) {
+                delete headers[existingContentLength];
+            }
+            if (contentLength !== undefined) {
                 headers['Content-Length'] = String(contentLength);
             }
 
