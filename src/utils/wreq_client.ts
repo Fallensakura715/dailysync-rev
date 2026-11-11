@@ -1,12 +1,24 @@
 import qs from 'qs';
 
-const { createSession, fetch: wreqFetch } = require('wreq-js');
+const { createSession, fetch: wreqFetch, getEmulationHeaders } = require('wreq-js');
 const { PassThrough, Readable } = require('stream');
 
 const WREQ_PROFILE = {
     browser: 'chrome_149',
     os: 'windows',
 };
+const CHROME_IDENTITY_HEADER_NAMES = new Set([
+    'user-agent',
+    'sec-ch-ua',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua-platform',
+]);
+const CHROME_IDENTITY_HEADERS: Record<string, string> = {};
+getEmulationHeaders(WREQ_PROFILE.browser, WREQ_PROFILE.os).forEach((value: string, name: string) => {
+    if (CHROME_IDENTITY_HEADER_NAMES.has(name.toLowerCase())) {
+        CHROME_IDENTITY_HEADERS[name] = value;
+    }
+});
 const OAUTH_CONSUMER_URL = 'https://thegarth.s3.amazonaws.com/oauth_consumer.json';
 
 type AxiosLikeConfig = {
@@ -43,6 +55,14 @@ const toUrl = (config: AxiosLikeConfig): string => {
 };
 
 const toHeaders = (input: any): Record<string, string> => {
+    if (input && typeof input.forEach === 'function' && typeof input.entries === 'function') {
+        const headers: Record<string, string> = {};
+        input.forEach((value: any, name: string) => {
+            headers[name] = String(value);
+        });
+        return headers;
+    }
+
     const values = typeof input?.toJSON === 'function' ? input.toJSON() : input;
     const headers: Record<string, string> = {};
 
@@ -53,6 +73,16 @@ const toHeaders = (input: any): Record<string, string> => {
     }
 
     return headers;
+};
+
+const withChromeIdentityHeaders = (input: any): Record<string, string> => {
+    const headers = toHeaders(input);
+    for (const name of Object.keys(headers)) {
+        if (CHROME_IDENTITY_HEADER_NAMES.has(name.toLowerCase())) {
+            delete headers[name];
+        }
+    }
+    return { ...headers, ...CHROME_IDENTITY_HEADERS };
 };
 
 const isFormDataStream = (value: any): boolean => {
@@ -92,7 +122,7 @@ export const createWreqAxiosAdapter = () => {
     return async (config: AxiosLikeConfig): Promise<any> => {
         const url = toUrl(config);
         const method = (config.method ?? 'get').toUpperCase();
-        const headers = toHeaders(config.headers);
+        const headers = withChromeIdentityHeaders(config.headers);
         let body = config.data;
 
         if (isFormDataStream(body)) {
@@ -193,6 +223,7 @@ export const wreqRequest = async (url: string, options: Record<string, any> = {}
     const response = await wreqFetch(url, {
         ...WREQ_PROFILE,
         ...options,
+        headers: withChromeIdentityHeaders(options.headers),
     });
 
     if (!response.ok) {
