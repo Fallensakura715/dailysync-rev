@@ -16,6 +16,7 @@ import _ from 'lodash';
 import { getSessionFromDB, getSyncCursor, initDB, saveSessionToDB, setSyncCursor, updateSessionToDB } from './sqlite';
 import { getSessionFromEnv } from './garmin_session_env';
 import { migrateGarminWellnessByDateRange, syncGarminWellnessRecentDays } from './garmin_wellness';
+import { configureGarminWreqClient } from './wreq_client';
 
 const CryptoJS = require('crypto-js');
 const fs = require('fs');
@@ -38,6 +39,7 @@ export const getGaminCNClient = async (): Promise<GarminClientType> => {
     }
 
     const GCClient = new GarminConnect({username: GARMIN_USERNAME, password: GARMIN_PASSWORD}, 'garmin.cn');
+    configureGarminWreqClient(GCClient);
 
     try {
         await initDB();

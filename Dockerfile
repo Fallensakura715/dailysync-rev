@@ -1,4 +1,4 @@
-FROM node:18-alpine3.19
+FROM node:22-alpine3.22
 WORKDIR /app
 RUN corepack enable && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 COPY package.json yarn.lock* tsconfig.json ./

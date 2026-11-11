@@ -14,6 +14,7 @@ import _ from 'lodash';
 import { getSessionFromDB, getSyncCursor, initDB, saveSessionToDB, setSyncCursor, updateSessionToDB } from './sqlite';
 import { getSessionFromEnv } from './garmin_session_env';
 import { migrateGarminWellnessByDateRange, syncGarminWellnessRecentDays } from './garmin_wellness';
+import { configureGarminWreqClient } from './wreq_client';
 
 const { GarminConnect } = require('@gooin/garmin-connect');
 
@@ -33,6 +34,7 @@ export const getGaminGlobalClient = async (): Promise<GarminClientType> => {
     }
 
     const GCClient = new GarminConnect({username: GARMIN_GLOBAL_USERNAME, password: GARMIN_GLOBAL_PASSWORD});
+    configureGarminWreqClient(GCClient);
 
     try {
         await initDB();

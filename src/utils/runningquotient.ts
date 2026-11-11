@@ -6,10 +6,10 @@ import {
     RQ_ROUTES_DEFAULT,
     RQ_USERID_DEFAULT,
 } from '../constant';
-import axios from 'axios';
 import { getGaminCNClient } from './garmin_cn';
 import { getGarminStatistics } from './garmin_common';
 import { getLatestActivityIdInSheets, insertDataToSheets } from './google_sheets';
+import { wreqRequest } from './wreq_client';
 import _ from 'lodash';
 const core = require('@actions/core');
 
@@ -39,7 +39,7 @@ export async function getRQOverView() {
 
     console.log('url', url);
     try {
-        const res = await axios(url, {
+        const res = await wreqRequest(url, {
             method: 'post',
             headers: {
                 'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -58,21 +58,21 @@ export async function getRQOverView() {
             },
         });
 
-        // console.log('getOverView ', res);
-        if (res?.data?.data) {
-            const rqdata = rqRegexp(res?.data?.data);
+        const responseData = await res.json();
+        if (responseData?.data) {
+            const rqdata = rqRegexp(responseData.data);
             return rqdata;
         } else {
             console.error('ERROR at 0, 检查TOKEN');
             core.setFailed('检查 RQ TOKEN');
-            await axios.get(
+            await wreqRequest(
                 `https://api.day.app/${BARK_KEY}/RQ运行失败了/ERROR检查TOKEN`);
             return {};
         }
     } catch (e) {
         console.error('ERROR, 检查TOKEN', e);
         core.setFailed('检查 RQ TOKEN');
-        await axios.get(
+        await wreqRequest(
             `https://api.day.app/${BARK_KEY}/RQ运行失败了/${e.message}`);
         throw new Error(e);
     }
