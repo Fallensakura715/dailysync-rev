@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "test": "ts-node src/test.ts",
+    "test_garmin_wreq": "ts-node src/test_garmin_wreq.ts",
     "rq": "ts-node src/rq.ts",
     "sync_cn": "ts-node src/sync_garmin_cn_to_global.ts",
     "sync_global": "ts-node src/sync_garmin_global_to_cn.ts",

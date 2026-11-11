@@ -219,12 +219,16 @@ export const configureGarminWreqClient = (garminClient: any): void => {
     };
 };
 
-export const wreqRequest = async (url: string, options: Record<string, any> = {}): Promise<any> => {
-    const response = await wreqFetch(url, {
+export const wreqFetchResponse = (url: string, options: Record<string, any> = {}): Promise<any> => {
+    return wreqFetch(url, {
         ...WREQ_PROFILE,
         ...options,
         headers: withChromeIdentityHeaders(options.headers),
     });
+};
+
+export const wreqRequest = async (url: string, options: Record<string, any> = {}): Promise<any> => {
+    const response = await wreqFetchResponse(url, options);
 
     if (!response.ok) {
         throw new Error(`Request failed with status code ${response.status}`);
